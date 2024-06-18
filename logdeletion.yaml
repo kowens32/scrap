@@ -1,0 +1,53 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template to create IAM role with permissions to delete CloudWatch Logs.
+
+Resources:
+  CloudWatchLogsDeletionPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties: 
+      PolicyName: 'CloudWatchLogsDeletionPolicy'
+      PolicyDocument: 
+        Version: '2012-10-17'
+        Statement: 
+          - Effect: 'Allow'
+            Action: 
+              - 'logs:DeleteLogGroup'
+              - 'logs:DeleteLogStream'
+              - 'logs:DeleteLogEvents'
+            Resource: '*'
+      Roles: 
+        - !Ref CloudWatchLogsDeletionRole
+
+  CloudWatchLogsDeletionRole:
+    Type: 'AWS::IAM::Role'
+    Properties: 
+      AssumeRolePolicyDocument: 
+        Version: '2012-10-17'
+        Statement: 
+          - Effect: 'Allow'
+            Principal: 
+              Service: 
+                - 'ec2.amazonaws.com'
+                - 'lambda.amazonaws.com'
+                - 'ecs-tasks.amazonaws.com'
+            Action: 'sts:AssumeRole'
+      RoleName: 'CloudWatchLogsDeletionRole'
+      Policies: 
+        - PolicyName: 'CloudWatchLogsDeletionPolicy'
+          PolicyDocument: 
+            Version: '2012-10-17'
+            Statement: 
+              - Effect: 'Allow'
+                Action: 
+                  - 'logs:DeleteLogGroup'
+                  - 'logs:DeleteLogStream'
+                  - 'logs:DeleteLogEvents'
+                Resource: '*'
+
+Outputs:
+  RoleName:
+    Description: 'Name of the IAM role with permissions to delete CloudWatch Logs'
+    Value: !Ref CloudWatchLogsDeletionRole
+  RoleArn:
+    Description: 'ARN of the IAM role with permissions to delete CloudWatch Logs'
+    Value: !GetAtt CloudWatchLogsDeletionRole.Arn
