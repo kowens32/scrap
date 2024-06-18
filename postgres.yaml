@@ -1,0 +1,63 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS CloudFormation template to create an Amazon RDS PostgreSQL database.
+
+Parameters:
+  DBInstanceIdentifier:
+    Description: Database instance identifier
+    Type: String
+    Default: mypostgresdb
+  DBName:
+    Description: The PostgreSQL database name
+    Type: String
+    Default: mydatabase
+  DBUser:
+    Description: The database admin account username
+    Type: String
+    Default: admin
+  DBPassword:
+    Description: The database admin account password
+    Type: String
+    NoEcho: true
+  DBAllocatedStorage:
+    Description: The size of the database (Gb)
+    Type: Number
+    Default: 20
+  DBInstanceClass:
+    Description: The database instance type
+    Type: String
+    Default: db.t3.micro
+  DBSubnetGroupName:
+    Description: The subnet group name for the RDS instance
+    Type: String
+    Default: default
+
+Resources:
+  MyDBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties: 
+      DBSubnetGroupDescription: Subnet group for RDS instance
+      SubnetIds: 
+        - subnet-12345678 # Replace with your subnet IDs
+        - subnet-87654321 # Replace with your subnet IDs
+
+  MyDBInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBName: !Ref DBName
+      DBInstanceIdentifier: !Ref DBInstanceIdentifier
+      AllocatedStorage: !Ref DBAllocatedStorage
+      DBInstanceClass: !Ref DBInstanceClass
+      Engine: postgres
+      MasterUsername: !Ref DBUser
+      MasterUserPassword: !Ref DBPassword
+      VPCSecurityGroups: 
+        - sg-12345678 # Replace with your security group ID
+      DBSubnetGroupName: !Ref MyDBSubnetGroup
+
+Outputs:
+  DBInstanceEndpoint:
+    Description: The connection endpoint for the database
+    Value: !GetAtt MyDBInstance.Endpoint.Address
+  DBInstanceIdentifier:
+    Description: The database instance identifier
+    Value: !Ref MyDBInstance
