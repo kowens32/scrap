@@ -1,9 +1,12 @@
+-- Create the database exampledb if it doesn't already exist
+CREATE DATABASE exampledb;
+
 -- Switch to the exampledb database
-USE exampledb;
+\c exampledb
 
 -- Create the example_table with some example columns
 CREATE TABLE IF NOT EXISTS example_table (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     age INT,
     email VARCHAR(255)
