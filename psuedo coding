@@ -1,0 +1,241 @@
+Basic Understanding of AWS:
+
+Explain the key components of AWS.
+
+What are the different types of instances available in AWS?
+Key Components: EC2, S3, RDS, VPC, Lambda, IAM, CloudFormation, CloudWatch, etc.
+Instance Types: General Purpose (T2, T3), Compute Optimized (C5), Memory Optimized (R5), Storage Optimized (I3), etc.
+
+How does AWS manage scaling of applications?
+Scaling: AWS provides Auto Scaling Groups to automatically adjust the number of EC2 instances. Elastic Load Balancing (ELB) distributes incoming application traffic across multiple instances.
+
+Networking:
+
+Describe how you would set up a VPC in AWS
+VPC Setup: Create a VPC, subnets, route tables, internet gateway, and optionally, a NAT gateway.
+What are Security Groups and Network ACLs, and how do they differ?
+Security Groups vs. Network ACLs: Security Groups are stateful, affecting instances directly; Network ACLs are stateless, affecting subnets.
+Explain the process of setting up a load balancer in AWS.
+Load Balancer Setup: Use the EC2 console or CLI to create an Application Load Balancer (ALB), Network Load Balancer (NLB), or Classic Load Balancer (CLB).
+
+Storage:
+
+Describe the differences between S3, EBS, and EFS.
+S3, EBS, and EFS: S3 is object storage, EBS is block storage, and EFS is file storage.
+How would you secure data at rest and in transit in AWS?
+Securing Data: Use S3 encryption, EBS encryption, and SSL/TLS for data in transit.
+
+Compute:
+
+What are the key differences between Lambda and EC2?
+Lambda vs. EC2: Lambda is for serverless functions; EC2 provides virtual servers for more control.
+How do you manage autoscaling in an AWS environment?
+Autoscaling Management: Use Auto Scaling Groups to set policies for launching and terminating EC2 instances.
+
+Database:
+
+Explain the differences between RDS and DynamoDB.
+RDS vs. DynamoDB: RDS is a relational database service; DynamoDB is a NoSQL database.
+How would you set up a highly available database in AWS?
+High Availability: Use Multi-AZ deployments for RDS, and for DynamoDB, use global tables and on-demand backups.
+
+Security:
+
+Describe the Shared Responsibility Model in AWS.
+How would you implement IAM policies to secure access to resources?
+IAM Policies: Define user roles and policies to grant least privilege access.
+
+Monitoring and Logging:
+
+How do you use CloudWatch for monitoring AWS resources?
+Set up metrics, alarms, and dashboards for resource monitoring.
+What are CloudTrail logs, and how are they useful?
+Track API calls and changes to your AWS resources.
+
+ROSA (Red Hat OpenShift Service on AWS) Questions:
+Basic Understanding of ROSA:
+
+Explain what ROSA is and its primary use cases.
+How does ROSA integrate with AWS services?
+Cluster Setup and Management:
+
+Describe the steps to create a ROSA cluster.
+How do you manage scaling and updates in ROSA?
+Networking:
+
+Explain how networking is handled in ROSA.
+How do you configure network policies in a ROSA cluster?
+Security:
+
+Describe how you would implement role-based access control (RBAC) in ROSA.
+What are some best practices for securing a ROSA cluster?
+Storage:
+
+How do you configure persistent storage in ROSA?
+Persistent Storage: Use Persistent Volumes (PVs) and Persistent Volume Claims (PVCs) to manage storage.
+Explain the use of persistent volume claims (PVCs) in ROSA.
+PVCs in ROSA: PVCs allow pods to request specific storage resources, backed by AWS EBS or other storage options.
+
+Monitoring and Logging:
+
+How do you monitor the health of a ROSA cluster?
+Describe the logging solutions available in ROSA.
+CI/CD Integration:
+
+Explain how to set up a CI/CD pipeline with ROSA.
+How would you deploy applications to a ROSA cluster using Jenkins or GitLab CI?
+Architectural Questions:
+Design a Scalable Web Application:
+Components: Use AWS EC2 for compute, S3 for static content, RDS for relational database, ELB for load balancing, and ROSA for container orchestration.
+Explanation: EC2 provides scalable compute resources, S3 offers scalable storage, RDS ensures data consistency, ELB distributes traffic, and ROSA manages containerized applications.
+
+Using AWS and ROSA, design a scalable web application architecture.
+Explain the components you would use and why.
+
+Disaster Recovery Plan:
+
+How would you design a disaster recovery plan for applications hosted on AWS and ROSA?
+What considerations need to be made for data replication and failover?
+Design: Use AWS regions and availability zones for redundancy, S3 for data backups, RDS Multi-AZ for database replication, and ROSA for application availability.
+Considerations: Plan for RTO and RPO, use cross-region replication for critical data, and automate failover processes.
+
+Microservices Architecture:
+
+Design a microservices architecture using AWS and ROSA.
+Design: Deploy microservices in ROSA using Kubernetes, utilize AWS Lambda for serverless functions, API Gateway for managing APIs, and DynamoDB for NoSQL storage.
+
+How would you handle inter-service communication and data consistency?
+ Use service mesh (e.g., Istio) for inter-service communication, and implement eventual consistency patterns where necessary.
+
+Cost Optimization:
+
+What strategies would you employ to optimize costs for an application running on AWS and ROSA?
+Explain the tools and techniques you would use to monitor and manage costs.
+
+
+
+
+ROSA architecture 
+
+Basic Architecture Overview:
+Control Plane Nodes:
+
+Typically, three control plane nodes are deployed for high availability. These nodes include the API server, etcd database, and controllers.
+Infrastructure Nodes:
+
+These nodes, usually two in number, handle the OpenShift container registry, router layer, and monitoring services.
+Worker Nodes:
+
+The worker nodes (also called compute nodes) run the application workloads. There are at least two worker nodes by default.
+Networking:
+
+The cluster is typically set up within a VPC (Virtual Private Cloud) in AWS, with both public and private subnets. The control plane and infrastructure nodes reside in the private subnet, while NAT gateways and load balancers are in the public subnet.
+Load Balancers:
+
+Multiple load balancers are used to manage traffic:
+API Network Load Balancer (NLB): Manages access to the control plane.
+Elastic Load Balancer (ELB): Manages access to end-user applications.
+SRE API ELB: Used by the Site Reliability Engineering (SRE) team for cluster management.
+Deployment Models:
+Single-AZ Deployment:
+
+This is the simplest deployment model, suitable for testing and development, not recommended for production due to the lack of high availability across multiple Availability Zones (AZs).
+Multi-AZ Deployment:
+
+For production, a multi-AZ deployment is recommended. This model spreads the control plane, infrastructure, and worker nodes across three different AZs, ensuring high availability and resilience.
+
+
+
+
+https://docs.openshift.com/rosa/architecture/rosa-architecture-models.html
+https://www.redhat.com/architect/what-is-rosa
+https://aws.amazon.com/blogs/containers/red-hat-openshift-service-on-aws-architecture-and-networking/
+
+
+
+
+CDK Structure 
+
+my-aws-cdk-project/
+├── bin/
+│   └── my-aws-cdk-project.ts       # Entry point for the CDK application
+├── lib/
+│   ├── my-aws-cdk-project-stack.ts # Main stack definition
+│   ├── database.ts                 # Database construct
+│   ├── load-balancer.ts            # Load Balancer construct
+│   ├── vpc.ts                      # VPC construct
+│   ├── s3-bucket.ts                # S3 Bucket construct
+│   └── api-gateway.ts              # API Gateway construct
+├── test/
+│   └── my-aws-cdk-project.test.ts  # Unit tests for the stack
+├── cdk.json                        # CDK project configuration
+├── package.json                    # Node.js dependencies and scripts
+├── tsconfig.json                   # TypeScript configuration
+└── README.md                       # Project documentation
+
+
+# bin/my-aws-cdk-project.ts
+import 'source-map-support/register';
+import * as cdk from 'aws-cdk-lib';
+import { MyAwsCdkProjectStack } from '../lib/my-aws-cdk-project-stack';
+
+const app = new cdk.App();
+new MyAwsCdkProjectStack(app, 'MyAwsCdkProjectStack');
+
+
+# lib/my-aws-cdk-project-stack.ts
+import * as cdk from 'aws-cdk-lib';
+import { Construct } from 'constructs';
+import { Vpc } from './vpc';
+import { S3Bucket } from './s3-bucket';
+import { Database } from './database';
+import { LoadBalancer } from './load-balancer';
+import { ApiGateway } from './api-gateway';
+
+export class MyAwsCdkProjectStack extends cdk.Stack {
+  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+    super(scope, id, props);
+
+    const vpc = new Vpc(this, 'MyVpc');
+    const s3Bucket = new S3Bucket(this, 'MyS3Bucket');
+    const database = new Database(this, 'MyDatabase', { vpc });
+    const loadBalancer = new LoadBalancer(this, 'MyLoadBalancer', { vpc });
+    const apiGateway = new ApiGateway(this, 'MyApiGateway', { loadBalancer });
+
+    // Additional resources or configuration can go here
+  }
+}
+
+
+# lib/database.ts
+import * as cdk from 'aws-cdk-lib';
+import { Construct } from 'constructs';
+import * as rds from 'aws-cdk-lib/aws-rds';
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
+
+interface DatabaseProps {
+  vpc: ec2.Vpc;
+}
+
+export class Database extends Construct {
+  public readonly instance: rds.DatabaseInstance;
+
+  constructor(scope: Construct, id: string, props: DatabaseProps) {
+    super(scope, id);
+
+    this.instance = new rds.DatabaseInstance(this, 'Database', {
+      engine: rds.DatabaseInstanceEngine.postgres({
+        version: rds.PostgresEngineVersion.VER_12_5,
+      }),
+      vpc: props.vpc,
+      multiAz: true,
+      allocatedStorage: 100,
+      maxAllocatedStorage: 200,
+      instanceType: ec2.InstanceType.of(
+        ec2.InstanceClass.BURSTABLE2,
+        ec2.InstanceSize.MICRO
+      ),
+      removalPolicy: cdk.RemovalPolicy.DESTROY, // NOT recommended for production code
+    });
+  }
+}
