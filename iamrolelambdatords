@@ -1,0 +1,70 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template to create an IAM role for Lambda to access RDS database.
+
+Resources:
+  LambdaExecutionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: "LambdaRDSAccessRole"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: "LambdaRDSAccessPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "rds:DescribeDBInstances"
+                  - "rds:DescribeDBClusters"
+                  - "rds:DescribeDBClusterEndpoints"
+                  - "rds:DescribeDBClusterParameterGroups"
+                  - "rds:DescribeDBClusterSnapshotAttributes"
+                  - "rds:DescribeDBClusterSnapshots"
+                  - "rds:DescribeDBEngineVersions"
+                  - "rds:DescribeDBInstanceAutomatedBackups"
+                  - "rds:DescribeDBLogFiles"
+                  - "rds:DescribeDBParameterGroups"
+                  - "rds:DescribeDBParameters"
+                  - "rds:DescribeDBProxies"
+                  - "rds:DescribeDBProxyEndpoints"
+                  - "rds:DescribeDBProxyTargetGroups"
+                  - "rds:DescribeDBProxyTargets"
+                  - "rds:DescribeDBSecurityGroups"
+                  - "rds:DescribeDBSnapshotAttributes"
+                  - "rds:DescribeDBSnapshots"
+                  - "rds:DescribeDBSubnetGroups"
+                  - "rds:DescribeEngineDefaultClusterParameters"
+                  - "rds:DescribeEngineDefaultParameters"
+                  - "rds:DescribeEventCategories"
+                  - "rds:DescribeEventSubscriptions"
+                  - "rds:DescribeEvents"
+                  - "rds:DescribeExportTasks"
+                  - "rds:DescribeGlobalClusters"
+                  - "rds:DescribeInstallationMedia"
+                  - "rds:DescribeOptionGroupOptions"
+                  - "rds:DescribeOptionGroups"
+                  - "rds:DescribeOrderableDBInstanceOptions"
+                  - "rds:DescribePendingMaintenanceActions"
+                  - "rds:DescribeReservedDBInstances"
+                  - "rds:DescribeReservedDBInstancesOfferings"
+                  - "rds:DescribeSourceRegions"
+                  - "rds:DescribeValidDBInstanceModifications"
+                  - "rds:ListTagsForResource"
+                  - "secretsmanager:GetSecretValue"
+                  - "secretsmanager:DescribeSecret"
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource: "*"
+
+Outputs:
+  LambdaExecutionRoleArn:
+    Description: "ARN of the IAM Role for Lambda to access RDS"
+    Value: !GetAtt LambdaExecutionRole.Arn
