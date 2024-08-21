@@ -1,0 +1,57 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template to create a KMS Customer Master Key (CMK) with multi-region support.
+
+Parameters:
+  SelectedRegion:
+    Type: String
+    Description: "The region where the KMS key will be deployed"
+    AllowedValues:
+      - us-east-1
+      - us-west-2
+      - eu-west-1
+      - ap-southeast-1
+    Default: us-east-1
+
+Mappings:
+  RegionMap:
+    us-east-1:
+      Alias: "alias/my-kms-key-us-east-1"
+    us-west-2:
+      Alias: "alias/my-kms-key-us-west-2"
+    eu-west-1:
+      Alias: "alias/my-kms-key-eu-west-1"
+    ap-southeast-1:
+      Alias: "alias/my-kms-key-ap-southeast-1"
+
+Resources:
+  MyKMSKey:
+    Type: "AWS::KMS::Key"
+    Properties: 
+      Description: !Sub "KMS CMK for encrypting sensitive data in ${AWS::Region}"
+      KeyPolicy:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              AWS: 
+                - !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action: 
+              - "kms:*"
+            Resource: "*"
+      Enabled: true
+      KeyUsage: "ENCRYPT_DECRYPT"
+      Origin: "AWS_KMS"
+      
+  MyKMSAlias:
+    Type: "AWS::KMS::Alias"
+    Properties:
+      AliasName: !FindInMap [RegionMap, !Ref SelectedRegion, Alias]
+      TargetKeyId: !Ref MyKMSKey
+
+Outputs:
+  KMSKeyId:
+    Description: "ID of the created KMS Key"
+    Value: !Ref MyKMSKey
+  KMSKeyArn:
+    Description: "ARN of the created KMS Key"
+    Value: !GetAtt MyKMSKey.Arn
