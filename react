@@ -1,68 +1,32 @@
-Certainly! Here’s a job description for a Senior Front-End React Developer:
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template to create an IAM Role with permissions to provision products in AWS Service Catalog.
 
----
-
-**Job Title: Senior Front-End React Developer**
-
-**Location:** [Insert Location or "Remote"]
-
-**Job Type:** Full-Time
-
-**About Us:**
-
-[Your Company Name] is a dynamic and innovative company dedicated to [brief description of the company, e.g., "building cutting-edge web applications that enhance user experiences."] We are seeking a highly skilled and experienced Senior Front-End React Developer to join our team and take a leading role in shaping the future of our products.
-
-**Job Overview:**
-
-As a Senior Front-End React Developer, you will be responsible for developing and maintaining complex web applications with a focus on performance, scalability, and user experience. You will work closely with cross-functional teams, including designers, backend developers, and product managers, to deliver high-quality software solutions. You should have a strong passion for front-end development and a deep understanding of React.js and its ecosystem.
-
-**Key Responsibilities:**
-
-- Lead the development of responsive and interactive web applications using React.js.
-- Collaborate with UX/UI designers to implement designs that are visually appealing and intuitive for users.
-- Optimize applications for maximum speed and scalability.
-- Write clean, maintainable, and testable code, following best practices and coding standards.
-- Mentor and guide junior developers, providing code reviews and technical advice.
-- Participate in the entire software development lifecycle, from concept and design to deployment and maintenance.
-- Work with backend developers to integrate RESTful APIs and other services.
-- Stay up-to-date with the latest trends and technologies in front-end development and React.js.
-- Troubleshoot and debug issues as they arise and ensure optimal performance of applications.
-- Contribute to the continuous improvement of the development process and team collaboration.
-
-**Required Skills and Qualifications:**
-
-- Bachelor’s degree in Computer Science, Engineering, or a related field (or equivalent experience).
-- 5+ years of professional experience in front-end development, with at least 3 years of experience working with React.js.
-- Strong proficiency in JavaScript, HTML5, and CSS3.
-- Experience with state management libraries such as Redux or MobX.
-- Familiarity with modern front-end build pipelines and tools (e.g., Webpack, Babel, NPM).
-- Understanding of RESTful APIs and asynchronous request handling.
-- Experience with version control systems, preferably Git.
-- Knowledge of front-end testing frameworks (e.g., Jest, Enzyme) and a strong commitment to quality.
-- Strong problem-solving skills and attention to detail.
-- Excellent communication and teamwork skills.
-- Ability to work independently and manage multiple tasks in a fast-paced environment.
-
-**Preferred Qualifications:**
-
-- Experience with TypeScript.
-- Familiarity with CI/CD pipelines and DevOps practices.
-- Knowledge of modern authorization mechanisms, such as JSON Web Token (JWT) and OAuth.
-- Experience with server-side rendering (SSR) and Next.js.
-- Understanding of accessibility standards and guidelines.
-
-**What We Offer:**
-
-- Competitive salary and benefits package.
-- Flexible working hours and remote work options.
-- Opportunities for professional growth and career advancement.
-- Collaborative and inclusive work environment.
-- Work on challenging and rewarding projects that make an impact.
-
-**How to Apply:**
-
-Please submit your resume, portfolio, and a cover letter outlining your experience and why you’re the perfect fit for this role to [Insert Contact Information or Application Link].
-
----
-
-Feel free to customize the job description to align with your specific company needs and the exact role requirements.
+Resources:
+  ServiceCatalogProvisioningRole:
+    Type: "AWS::IAM::Role"
+    Properties: 
+      RoleName: "ServiceCatalogProvisioningRole"
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          - Effect: "Allow"
+            Principal: 
+              Service: "servicecatalog.amazonaws.com"
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: "ServiceCatalogProvisioningPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "servicecatalog:ProvisionProduct"
+                  - "servicecatalog:TerminateProvisionedProduct"
+                  - "servicecatalog:DescribeProvisionedProduct"
+                  - "servicecatalog:UpdateProvisionedProduct"
+                  - "servicecatalog:ListProvisioningArtifacts"
+                  - "servicecatalog:ListProvisionedProducts"
+                  - "servicecatalog:DescribeProduct"
+                  - "servicecatalog:DescribeProductView"
+                  - "servicecatalog:DescribeRecord"
+                Resource: "*"
