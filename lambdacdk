@@ -1,0 +1,40 @@
+import * as cdk from 'aws-cdk-lib';
+import { Construct } from 'constructs';
+import { PythonFunction, PythonFunctionProps } from '@aws-cdk/aws-lambda-python-alpha';
+import { Duration } from 'aws-cdk-lib';
+import * as path from 'path';
+import * as s3 from 'aws-cdk-lib/aws-s3';
+
+interface PythonLambdaConstructProps {
+  bucketName: string; // Example of passing additional properties
+}
+
+export class PythonLambdaConstruct extends Construct {
+  public readonly lambdaFunction: PythonFunction;
+
+  constructor(scope: Construct, id: string, props: PythonLambdaConstructProps) {
+    super(scope, id);
+
+    // Create S3 bucket (example of additional resource)
+    const bucket = new s3.Bucket(this, 'MyBucket', {
+      bucketName: props.bucketName,
+      removalPolicy: cdk.RemovalPolicy.DESTROY, // Automatically destroy the bucket when the stack is deleted
+    });
+
+    // Define PythonFunction properties
+    const lambdaProps: PythonFunctionProps = {
+      entry: path.join(__dirname, '../lambda'), // directory containing your lambda code
+      runtime: cdk.aws_lambda.Runtime.PYTHON_3_9, // define runtime
+      timeout: Duration.seconds(30),
+      environment: {
+        BUCKET_NAME: bucket.bucketName,
+      },
+    };
+
+    // Create Python Lambda function
+    this.lambdaFunction = new PythonFunction(this, 'MyPythonLambda', lambdaProps);
+
+    // Grant the Lambda function permissions to access the S3 bucket
+    bucket.grantReadWrite(this.lambdaFunction);
+  }
+}
