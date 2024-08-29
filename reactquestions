@@ -1,0 +1,85 @@
+When interviewing a React developer, it's important to cover a range of topics to assess their understanding of React fundamentals, advanced concepts, and practical experience. Here are some good interview questions for a React developer:
+
+### Basic and Core React Questions
+
+1. **What is React, and what are its main features?**
+   - This question assesses the candidate's understanding of React's core principles, like its declarative nature, component-based architecture, and use of a virtual DOM.
+
+2. **Explain the difference between functional and class components.**
+   - This tests the candidate’s knowledge of the two types of components in React and the evolution towards functional components with Hooks.
+
+3. **What are props and state in React? How do they differ?**
+   - Understanding props (used to pass data to components) and state (used to manage data within a component) is fundamental to React.
+
+4. **What is the virtual DOM, and how does it work in React?**
+   - This helps gauge the candidate’s understanding of React’s performance optimizations.
+
+5. **How do you handle events in React?**
+   - This question tests knowledge of event handling in React, which differs from plain JavaScript.
+
+### Intermediate React Questions
+
+6. **What are Hooks in React? Can you name a few and explain their purpose?**
+   - The candidate should be familiar with useState, useEffect, useContext, and other Hooks, demonstrating their understanding of how Hooks manage state and side effects.
+
+7. **What is the difference between `useEffect` and `useLayoutEffect`?**
+   - This question assesses their knowledge of side effects and how to optimize rendering behavior.
+
+8. **Explain the Context API and when you would use it.**
+   - This tests the candidate’s understanding of managing state that needs to be shared across multiple components without prop drilling.
+
+9. **What is a Higher-Order Component (HOC), and how does it differ from a Render Prop pattern?**
+   - This question explores advanced component patterns in React and their use cases.
+
+10. **How would you optimize the performance of a React application?**
+    - This assesses the candidate's understanding of performance optimizations, such as using React.memo, useCallback, useMemo, and proper key usage in lists.
+
+### Advanced React Questions
+
+11. **What are some common pitfalls with using Hooks, and how would you avoid them?**
+    - This question tests deeper knowledge of React Hooks and common mistakes developers might make.
+
+12. **Can you explain how server-side rendering (SSR) works in React, and why it might be used?**
+    - This question explores concepts of SSR and its benefits, such as SEO and performance.
+
+13. **What are React Portals, and when would you use them?**
+    - Understanding React Portals shows familiarity with advanced rendering scenarios, like rendering modals outside the main DOM hierarchy.
+
+14. **How does the React Reconciliation algorithm work?**
+    - This tests the candidate’s understanding of how React efficiently updates the DOM.
+
+15. **Explain the concept of React Fiber and its advantages over the previous architecture.**
+    - This question assesses the candidate’s knowledge of the latest improvements in React.
+
+### Practical and Experience-Based Questions
+
+16. **Describe a challenging problem you faced while developing a React application. How did you solve it?**
+    - This gives insight into their problem-solving skills and experience level.
+
+17. **How do you manage state in a large React application?**
+    - This question helps understand the candidate’s experience with state management libraries like Redux, Zustand, or React’s Context API for larger applications.
+
+18. **Can you walk me through the process of upgrading a React application to a new major version? What are the potential challenges?**
+    - This gauges the candidate’s understanding of maintaining and upgrading React applications.
+
+19. **How do you handle form validation in React?**
+    - Understanding different methods of form handling and validation in React, including libraries like Formik or React Hook Form.
+
+20. **What are some accessibility considerations when building a React application?**
+    - This question assesses the candidate’s awareness of building inclusive, accessible web applications.
+
+### Behavioral Questions
+
+21. **How do you approach testing in a React application?**
+    - This tests knowledge of testing libraries (like Jest, React Testing Library) and best practices.
+
+22. **Describe how you would refactor a legacy class-based component into a functional component using Hooks.**
+    - This tests practical knowledge of migrating codebases and working with both older and newer React code.
+
+23. **Have you ever worked with a design system or component library in React? How did you integrate it?**
+    - This explores experience with reusable components and design systems like Material-UI, Ant Design, etc.
+
+24. **How do you stay updated with the latest changes and best practices in React development?**
+    - This helps understand their commitment to continuous learning and staying current with React and the broader JavaScript ecosystem.
+
+By asking a range of these questions, you can gauge both the depth and breadth of a candidate’s React knowledge and experience.
