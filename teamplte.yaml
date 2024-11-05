@@ -1,0 +1,382 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  cloudfront-authorization-at-edge
+  Repository for deploying a cloudfront-authorization-at-edge
+
+Parameters:
+  SecretArn:
+    Description: Secret Name Containing OIDC Configuration
+    Type: String
+
+  DistFolder:
+    Type: String
+    Description: Sub-path to TS output folder. Used for local invocations.
+    Default: "index.handler"
+
+  AuthorizationSigningKeyRotationTime:
+    Type: Number
+    Description: Number of days before automatic secret rotation for the authorization secret
+    Default: 30
+
+  CodeChallengeSigningKeyRotationTime:
+    Type: Number
+    Description: Number of days before automatic secret rotation for code challenge secret
+    Default: 30
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    MemorySize: 128 # Max for viewer-request
+    Timeout: 5 # Lambda Edge Default Timeout 5 seconds
+    Runtime: nodejs18.x
+    Architectures:
+      - x86_64
+
+Resources:
+
+  LambdaEdgeAuthorizationSigningKey:
+    # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-secretsmanager-secret.html
+    Type: AWS::SecretsManager::Secret
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      Description: Signing key
+      GenerateSecretString:
+        PasswordLength: 4096
+      Tags:
+        - Key: ExcludePunctuation
+          Value: "false"
+        - Key: PasswordLength
+          Value: 4096
+    Metadata:
+      checkov:
+        skip:
+          - id: "CKV_AWS_149"
+            comment: "AWS-managed keys may be used"
+      cfn_nag:
+        rules_to_suppress:
+          - id: W77
+            reason: "Using the default AWS-managed key"
+
+  LambdaEdgeCodeChallengeSecret:
+    # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-secretsmanager-secret.html
+    Type: AWS::SecretsManager::Secret
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      Description: Lambda Edge Function Authorization Code Challenge
+      GenerateSecretString:
+        ExcludeCharacters: false
+        ExcludeLowercase: false
+        ExcludeNumbers: false
+        ExcludePunctuation: true
+        ExcludeUppercase: false
+        IncludeSpace: false
+        PasswordLength: 50
+      Tags:
+        - Key: ExcludePunctuation
+          Value: "true"
+        - Key: PasswordLength
+          Value: 50
+    Metadata:
+      checkov:
+        skip:
+          - id: "CKV_AWS_149"
+            comment: "AWS-managed keys may be used"
+      cfn_nag:
+        rules_to_suppress:
+          - id: W77
+            reason: "Using the default AWS-managed key"
+
+  LambdaEdgeAuthorizationSigningKeyRotationFunction:
+    Type: AWS::Serverless::Function
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      AutoPublishAlias: live
+      CodeUri: ../../../lambdas/jwt-rotation
+      Handler: !Ref DistFolder
+      Role: !GetAtt SecretRotationAuthorizationRole.Arn
+      Tracing: Active
+      Environment:
+        Variables:
+          EnableDevMode: 'false'
+      ReservedConcurrentExecutions: 5
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: "es2020"
+        Sourcemap: true
+        EntryPoints:
+          - src/index.ts
+        External:
+          - 'aws-sdk'
+      checkov:
+        skip:
+          - id: "CKV_AWS_173"
+            comment: "No encryption is needed for these environment variables"
+          - id: "CKV_AWS_116"
+            comment: "Dead letter queue is not needed as failed calls to lambda will not affect the application and no data from the calls need to be processed"
+          - id: "CKV_AWS_117"
+            comment: "This Lambda function does not need to be inside a VPC"
+      cfn_nag:
+        rules_to_suppress:
+          - id: W89
+            reason: "This Lambda function does not need to be inside a VPC"
+
+  LambdaEdgeAuthorizationSigningKeyRotationLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt LambdaEdgeAuthorizationSigningKeyRotationFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: secretsmanager.amazonaws.com
+
+  LambdaEdgeAuthorizationSigningKeyRotationSchedule:
+    Type: AWS::SecretsManager::RotationSchedule
+    Properties:
+      RotationLambdaARN: !GetAtt LambdaEdgeAuthorizationSigningKeyRotationFunction.Arn
+      RotationRules:
+        AutomaticallyAfterDays: !Ref AuthorizationSigningKeyRotationTime
+      SecretId: !Ref LambdaEdgeAuthorizationSigningKey
+
+  LambdaEdgeCodeChallengeSigningKeyRotationSchedule:
+    Type: AWS::SecretsManager::RotationSchedule
+    Properties:
+      RotationLambdaARN: !GetAtt LambdaEdgeAuthorizationSigningKeyRotationFunction.Arn
+      RotationRules:
+        AutomaticallyAfterDays: !Ref CodeChallengeSigningKeyRotationTime
+      SecretId: !Ref LambdaEdgeCodeChallengeSecret
+
+  LambdaEdgeAuthorizationFunction:
+    Type: AWS::Serverless::Function
+    # TODO: Add in readme.md to delete any lambda edge functions that remain after deletion
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      FunctionName: CloudfrontLambdaAuthEdge
+      CodeUri: ../../../lambdas/authorization-at-edge
+      Handler: !Ref DistFolder
+      AutoPublishAlias: live
+      Role: !GetAtt LambdaEdgeAuthorizationRole.Arn
+      ReservedConcurrentExecutions: 30
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: "es2020"
+        Sourcemap: false
+        EntryPoints:
+          - src/index.ts
+        External:
+          - 'aws-sdk'
+      checkov:
+        skip:
+          - id: "CKV_AWS_116"
+            comment: "Dead letter queue is not needed as failed calls to lambda will not affect the application and no data from the calls need to be processed"
+          - id: "CKV_AWS_117"
+            comment: "This Lambda function does not need to be inside a VPC"
+      cfn_nag:
+        rules_to_suppress:
+          - id: W89
+            reason: "This Lambda function does not need to be inside a VPC"
+  
+  # LambdaInvokePermission:
+  #  Type: AWS::Lambda::Permission
+  #  Properties:
+  #     Action: lambda:InvokeFunction
+  #     FunctionName: !GetAtt LambdaEdgeAuthorizationFunction.Arn
+  #     Principal: edgelambda.amazonaws.com
+  #     SourceArn: !Sub
+  #       - "arn:aws:cloudfront::${AWS::AccountId}:distribution/${cloudfrontdistributionid}" 
+  #       - cloudfrontdistributionid: !ImportValue cloudfrontdistributionid
+
+  # New Role for secret rotation
+  SecretRotationAuthorizationRole:
+    Type: AWS::IAM::Role
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W28
+            reason: "Role name has stack id appended so it is unique"
+          - id: W11
+            reason: "Giving all resources permission to call GetRandomPassword is okay"
+    Properties:
+      RoleName:
+        !Join [
+          "-",
+          [
+            "delegate-admin-secret-rotation",
+            !Ref AWS::Region,
+            !Select [
+              0,
+              !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
+            ],
+          ],
+        ]
+      PermissionsBoundary: !Sub arn:aws:iam::${AWS::AccountId}:policy/cft-developer-boundary-policy
+      Path: "/"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+        - "arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess"
+      Policies:
+        - PolicyName: secret-rotation
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              # Allow Lambda function to essentially read itself to fetch the secret the Secret ARN :)
+              - Effect: Allow
+                Action:
+                  - secretsmanager:DescribeSecret
+                  - secretsmanager:GetSecretValue
+                  - secretsmanager:PutSecretValue
+                  - secretsmanager:UpdateSecretVersionStage
+                Resource:
+                  - !Ref LambdaEdgeAuthorizationSigningKey
+                  - !Ref LambdaEdgeCodeChallengeSecret
+              - Effect: Allow
+                Action: secretsmanager:GetRandomPassword
+                Resource: '*'
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: "AllowLambdaServiceToAssumeRole"
+            Effect: "Allow"
+            Action:
+              - "sts:AssumeRole"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+                - "edgelambda.amazonaws.com"
+                - "secretsmanager.amazonaws.com"
+
+  LambdaEdgeAuthorizationRole:
+    Type: AWS::IAM::Role
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W28
+            reason: "Role name has stack id appended so it is unique"
+    Properties:
+      RoleName:
+        !Join [
+          "-",
+          [
+            "delegate-admin-lambda-edge",
+            !Ref AWS::Region,
+            !Select [
+              0,
+              !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
+            ],
+          ],
+        ]
+      PermissionsBoundary: !Sub arn:aws:iam::${AWS::AccountId}:policy/cft-developer-boundary-policy
+      Path: "/"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      Policies:
+        - PolicyName: getRole
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: iam:GetRolePolicy
+                Resource:
+                  !Join [
+                    "-",
+                    [
+                      !Sub "arn:aws:iam::${AWS::AccountId}:role/delegate-admin-lambda-edge",
+                      !Ref AWS::Region,
+                      !Select [
+                        0,
+                        !Split [
+                          "-",
+                          !Select [2, !Split ["/", !Ref AWS::StackId]],
+                        ],
+                      ]
+                    ],
+                  ]
+        - PolicyName: oidc-secret # IMPORTANT DO NOT CHANGE THE INLINE POLICY NAME. Source code expects a policyName called OIDC
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              # Allow Lambda function to essentially read itself to fetch the secret the Secret ARN :)
+              - Effect: Allow
+                Action:
+                  - "secretsmanager:GetResourcePolicy"
+                  - "secretsmanager:GetSecretValue"
+                  - "secretsmanager:DescribeSecret"
+                  - "secretsmanager:ListSecretVersionIds"
+                Resource: !Sub "${SecretArn}"
+        # TODO(redwoods) https://mechanicalrock.github.io/2020/02/03/secrets-rotation-with-secrets-manager.html
+        # This will contain the secret we care about
+        - PolicyName: jwt-secret # IMPORTANT DO NOT CHANGE THE INLINE POLICY NAME. Source code expects a policyName called OIDC
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              # Allow Lambda function to essentially read itself to fetch the secret the Secret ARN :)
+              - Effect: Allow
+                Action:
+                  - "secretsmanager:GetResourcePolicy"
+                  - "secretsmanager:GetSecretValue"
+                  - "secretsmanager:DescribeSecret"
+                  - "secretsmanager:ListSecretVersionIds"
+                Resource: !Ref LambdaEdgeAuthorizationSigningKey
+        - PolicyName: code-challenge-secret # IMPORTANT DO NOT CHANGE THE INLINE POLICY NAME. Source code expects a policyName called OIDC
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              # Allow Lambda function to essentially read itself to fetch the secret the Secret ARN :)
+              - Effect: Allow
+                Action:
+                  - "secretsmanager:GetResourcePolicy"
+                  - "secretsmanager:GetSecretValue"
+                  - "secretsmanager:DescribeSecret"
+                  - "secretsmanager:ListSecretVersionIds"
+                Resource: !Ref LambdaEdgeCodeChallengeSecret
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: "AllowLambdaServiceToAssumeRole"
+            Effect: "Allow"
+            Action:
+              - "sts:AssumeRole"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+                - "edgelambda.amazonaws.com"
+                - "secretsmanager.amazonaws.com"
+
+Outputs:
+
+  LambdaEdgeAuthorizationFunction:
+    Description: "Lambda Edge Authorization Function ARN"
+    Value: !GetAtt LambdaEdgeAuthorizationFunction.Arn
+    Export:
+      Name: LambdaEdgeAuthArn
+
+  LambdaEdgeAuthorizationRoleRole:
+    Description: "IAM Role ARN created for Lambda Edge Authorization Function"
+    Value: !GetAtt LambdaEdgeAuthorizationRole.Arn
+    Export:
+      Name: LambdaEdgeAuthRoleArn
+
+  LambdaEdgeAuthorizationSigningKey:
+    Description: "AWS Secret Manager Secret Containing Signing Key used for JWT Tokens"
+    Value: !Ref LambdaEdgeAuthorizationSigningKey
+    Export:
+      Name: LambdaEdgeAuthSigningKey
+
+  LambdaEdgeAuthorizationFunctionName:
+    Description: "Name of the lambda at edge authorization"
+    Value: !Ref LambdaEdgeAuthorizationFunction
+    Export:
+      Name: LambdaEdgeAuthFunctionName
+
+  LambdaEdgeAuthorizationSigningKeyRotationFunctionName:
+    Description: "Name of the secret rotation lambda"
+    Value: !Ref LambdaEdgeAuthorizationSigningKeyRotationFunction
+    Export:
+      Name: LambdaEdgeAuthSigningKeyFunctionName
+
